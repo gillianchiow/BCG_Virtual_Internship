@@ -1,0 +1,9 @@
+Dear [Name of Lead Data Scientist],
+
+  After discussing in-depth with the team, it is known that the significant churn problem are driven by power-liberalization of the energy market in Europe and the
+  problem is largest in the SME segment.We would need the following data in order to hypothesise of whether the churn is driven by the customers' price sensitivity 
+  using predictive model.
+    - Primary data: 
+        i) Customer Feedback: reason of terminating service, a feedback form should be offer to the customer to understand the situation; rating for service; rating for price satisfaction 
+    - Secondary data:
+        i) Customer database: customers'
