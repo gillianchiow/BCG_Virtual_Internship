@@ -1,1 +1,1 @@
-# bcgintership
+# BCGVirtualInternship
