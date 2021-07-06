@@ -6,4 +6,15 @@ Dear [Name of Lead Data Scientist],
     - Primary data: 
         i) Customer Feedback: reason of terminating service, a feedback form should be offer to the customer to understand the situation; rating for service; rating for price satisfaction 
     - Secondary data:
-        ii) Customer database: customers'
+        ii) Customer database: customers' details including residing country, industry, electricity consumption history, sign-up for service date
+        iii) Churn data: To indicate whether the customer has churned
+        
+  We may conduct the testing accordingly with the predictive model such as logistics regression, random forest, regression tree. The most effective (highest complexity, explainability 
+  and the accuracy) model will be selected. After aligning the predictive model, we can use the model to test the direction and magnitude of the price on customer churn rate. We can 
+  remain the variable as control and see whether there are any other factor affected the current situation. Last but not least, we can adjust the discount strategy according to the result
+  gotten from the predictive model testing.
+  
+  Have a nice day! Please do not hesitate to add-on any additional comment on the suggested solution. We may discuss accordingly.
+  
+  Regards,
+  [Your Name]
