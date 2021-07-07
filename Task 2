@@ -1,1 +1,79 @@
-
+#Data Exploration---------------------------
+--------------------------------------------
+##Output Dataset----------------------------
+#Rename the dataset
+pco_main = ml_case_training_data 
+pco_history = ml_case_training_hist_data
+pco_output = ml_case_training_output
+#To understand how many customer churn in the output
+# 0 means "stayed",1 means "churned"
+table(pco_output$churn)
+## 14501 stayed, 1595 churned
+# To find out proportion of customer attrition in the last 3 months
+attrition_rate1 = (14501/16096)*100
+attrition_rate1
+attrition_rate2 = (1595/16096)*100
+attrition_rate2
+attrition_rate <- table(attrition_rate1, attrition_rate2)
+attrition_rate
+##Facts
+#In the last 3 months 1,595 customers have churned
+#There are currently 14,501 active clients
+#Customer retention is 90% in the last 3 months
+#Customer attrition is 10% in the last 3 months
+----------------------------------------------
+#History Dataset -----------------------------
+head(pco_history)
+summary(pco_history)
+##Facts
+# - The average price of energy for the 1st period was: $0.14
+# - The average price of energy for the 2nd period was: $0.05
+# - The average price of energy for the 3rd period was: $0.03
+#The average price of energy was declining in the last year.
+# - The average power of power for the 1st period was: $43.32
+# - The average power of power for the 2nd period was: $10.69
+# - The average power of power for the 3rd period was: $6.45
+#The average price of power was declining in the last year.
+#Identify missing number
+a=table(is.na(pco_history$price_p1_var))
+b=table(is.na(pco_history$price_p2_var))
+c=table(is.na(pco_history$price_p3_var))
+d=table(is.na(pco_history$price_p1_fix))
+e=table(is.na(pco_history$price_p2_fix))
+f=table(is.na(pco_history$price_p3_fix))
+missing_number=rbind(a,b,c,d,e,f)
+missing_number
+percentage_missing_number=(missing_number/193002)*100
+percentage_missing_number
+#Observations
+# - price_p1_fix, price_p2_fix, and price_p3_fix contain negative values, negative prices of power do not make sense.
+# - The dataset pco_hist contains 1359 rows displaying NA values on 6 variables except for id and price_date.
+# - The price_..._var and price_..._fix columns are missing 0.704% of the data in each of them.
+----------------------------------------------
+##Main Dataset--------------------------------
+#Identify the missing number
+na_count <-sapply(pco_main, function(y) sum(length(which(is.na(y)))))
+na_count <- data.frame(na_count)
+# Identify the percentage of nullity in the dataframe for each collumn
+percentage_missing_num=(na_count/16096)*100
+percentage_missing_num
+# Summary of the dataset
+summary(pco_main)
+#Fact
+# - The average tenure of a client is 5 years
+# - The average net marging is $217
+# Observations
+# - 14 columns contain negative minimum values
+# - The activity_new column is missing 59.3% of its data
+# - The campaign_disc_ele column is missing completely (100%)
+# - The channel_sales column is missing 26.2% of its data
+# - The date_end column is missing 0.01% of its data
+# - The date_first_activ_ column is missing 78.2% of its data
+# - The date_modif_prod column is missing 0.9% of its data
+# - The date_renewal column is missing 0.24% of it data
+# - The marging_gross_pow_ele and margin_net_pow_ele columns are both missing 0.08% of its data
+# - The net_margin column is missing 0.09% of its data
+# - The origin_up column is missing 0.54% of its data
+# - The pow_max column is missing 0.018% of its data
+# - The forecast_base_bill_ele, forecast_base_bill_year, forecast_bill_12m, and forecast_cons columns are each missing 78.2% of its data
+----------------------------------------------
