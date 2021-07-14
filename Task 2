@@ -77,3 +77,106 @@ summary(pco_main)
 # - The pow_max column is missing 0.018% of its data
 # - The forecast_base_bill_ele, forecast_base_bill_year, forecast_bill_12m, and forecast_cons columns are each missing 78.2% of its data
 ----------------------------------------------
+#Data Cleaning----------------------------------------
+## Historical Data - Identify negative columns -------------------------
+pco_history$negativevalue=data.frame(pco_history$price_p1_fix, pco_history$price_p2_fix, pco_history$price_p3_fix)
+pco_history$negativevalue=abs(pco_history$negativevalue)
+pco_history=pco_history[-c(6:8)]
+pco_history$price_p1_fix=pco_history$negativevalue$pco_history.price_p1_fix
+pco_history$price_p2_fix=pco_history$negativevalue$pco_history.price_p2_fix
+pco_history$price_p3_fix=pco_history$negativevalue$pco_history.price_p3_fix
+pco_history=pco_history[-c(1:2,6)]
+## Generate the summary after absoluting the neg value
+summary(pco_history)
+# Identify the index of the IDs containing missing values.
+install.packages("dplyr")
+library(dplyr)
+pco_history = ml_case_training_hist_data
+pco_history$negativevalue=data.frame(pco_history$price_p1_fix, pco_history$price_p2_fix, pco_history$price_p3_fix)
+pco_history$negativevalue=abs(pco_history$negativevalue)
+pco_history=pco_history[-c(6:8)]
+pco_history$price_p1_fix=pco_history$negativevalue$pco_history.price_p1_fix
+pco_history$price_p2_fix=pco_history$negativevalue$pco_history.price_p2_fix
+pco_history$price_p3_fix=pco_history$negativevalue$pco_history.price_p3_fix
+pco_hist_missing <- pco_history%>%
+  filter(is.na(price_p1_var))
+# Extract the unique dates of missing data
+date_lst = unique(pco_hist_missing$price_date)
+id_lst = unique(pco_hist_missing$id)
+# Create a time dataframe with the unique dates
+time_df = date_lst[order(date_lst)]
+#Facts
+# - There is high correlation between the missingness in the numeric columns and is values, missing or non-missing
+# - There are 1359 clients who are missing price data at least in 1 month
+#Observations
+# - After sorting the pco_hist dataset by id and price_date, we found that some columns are likely to be MNAR.
+# - The columns containing prices display strong positive correlation in the missingness suggests a case of MNAR.
+# - This event suggest that multicolinearity might be present in the dataset.
+## Historical Data - Imputation ------------------------------
+copy_pcohist <- pco_history[-c(6)]
+install.packages("zoo")
+library(zoo)
+# Fill NaNs using forward fill 
+pcohist<-na.locf(na.locf(copy_pcohist), fromLast = TRUE)
+summary(pcohist)
+# Merge output dataset with historical dataset
+pco_hist_ff_merged<-merge(pco_output,pcohist)
+## Main Data - Identify missing number -------------------------
+# Demonstrate why the date_activ column cannot replace completely date_first_activ
+pco_activity = data.frame(pco_main$date_activ,pco_main$date_first_activ)
+# Obtain only the complete cases
+library(tidyr)
+pco_activity_cc = drop_na(pco_activity)
+summary(pco_activity_cc)
+# Drop the column activity_new and campaign_disc_elec
+pco_main_drop = pco_main[-c(2,3)]
+# Remove date_end date_modif_prod date_renewal origin_up pow_max margin_gross_pow_ele margin_net_pow_ele net_margin
+pco_main_drop = drop_na(pco_main_drop)
+# Choose the columns without missing values
+complete_cols = pco_main_drop[-c(2,8,11:14)]
+# Overwrite positive values on negative values
+pco_main_cc <- select_if(complete_cols, is.numeric) 
+pco_main_cc = abs(pco_main_cc)
+summary(pco_main_cc)
+# Convert the has_gas column to  Yes/No
+pco_main_cc$has_gas = as.character(complete_cols$has_gas)
+pco_main_cc$has_gas=pco_main_cc %>% 
+  mutate(has_gas=recode(has_gas, "FALSE" = "No", "TRUE" = "Yes"))
+# Merge the main dataset with the output dataset
+pco_main_cc$id = complete_cols$id
+pco_main_cc_merged = merge(pco_main_cc,pco_output,by='id')
+# Convert the churn column to Churned/Stayed
+pco_main_cc_merged$churn = pco_main_cc_merged %>% 
+  mutate(churn = recode(churn, "0" = "Stayed", "1" = "Churned"))
+# Data Visualization----------------------------
+##Historical Dataset----------------------------
+# Calculate the zcores of tenure
+mean=mean(pco_main_cc_merged$num_years_antig)
+sd=sd(pco_main_cc_merged$num_years_antig)
+tenure_zcores=pco_main_cc_merged %>% 
+  mutate(zscore = (num_years_antig - mean(num_years_antig))/sd(num_years_antig))
+# Convert to absolute values
+tenure_zcores <- select_if(tenure_zcores, is.numeric) 
+abs_tenure_zscores = abs(tenure_zcores)
+# Extract Columns of interest
+churn_tenure = data.frame(pco_main_cc_merged$churn$churn,pco_main_cc_merged$num_years_antig)
+# Add z-score column
+churn_tenure$z_score = abs_tenure_zscores
+# Visualize tenure by retained customer and churner
+vio <- ggplot(churn_tenure, aes(x=churn_tenure$pco_main_cc_merged.num_years_antig, y=churn_tenure$pco_main_cc_merged.churn.churn)) + 
+  geom_violin()
+vio
+# Facts
+# - The median age of churners is 4 years
+# - Customers are more likely to churn during the 4th year than the 7th year
+# - The median age of retained customers is 5 years
+## Main Dataset ----------------------------
+# Most popular electricty campaign
+pco_main1=data.frame(pco_main$id,pco_main$origin_up)
+names(pco_main1)[1] <- "id"
+names(pco_main1)[2] <- "origin_up"
+pco_main_cc_merged=merge(pco_main_cc_merged,pco_main1, by='id')
+ele_nm = filter(pco_main_cc_merged, churn$churn == "Stayed" & net_margin > 0 )
+table(ele_nm$origin_up.y)
+#Facts
+# - The most popular electricity campaign is lxidpiddsbxsbosboudacockeimpuepw which has brought 2540 current customers.
